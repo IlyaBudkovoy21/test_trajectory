@@ -23,7 +23,6 @@ def worker_fixture():
 def disable_logging_globally():
     logging.disable(logging.CRITICAL)
 
-
 class TestWorker:
     def test_get_day_id_by_date(self, worker_fixture):
         worker = worker_fixture
@@ -48,3 +47,16 @@ class TestWorker:
 
         test3 = worker._get_busy_intervals_by_day(5)
         assert test3 is None
+
+    def test_get_free_time_by_date(self, worker_fixture):
+        worker = worker_fixture
+
+        assert worker.get_free_time_by_date("2024-10-11") == ["08:00-09:30", "16:00-17:00"]
+
+        assert worker.get_free_time_by_date("2024-10-10") == ["09:00-11:00", "12:00-13:00", "16:00-18:00"]
+
+        with pytest.raises(ValueError):
+            worker.get_free_time_by_date("2024-10-20")
+
+        with pytest.raises(ValueError):
+            worker.get_free_time_by_date("2024-20-10")

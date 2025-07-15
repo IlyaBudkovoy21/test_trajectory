@@ -10,4 +10,4 @@ def parse_date(date: str) -> Optional[str]:
         return date
     except ValueError as e:
         logger.error(e)
-        return None
+        raise ValueError("Uncorrect date")
