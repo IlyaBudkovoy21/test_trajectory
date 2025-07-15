@@ -13,12 +13,9 @@ from src.validators import parse_date
     )
 )
 def test_parse_date(test_date: str, exp_result: datetime | None):
-    result = parse_date(test_date)
     if exp_result is None:
-        assert result is None
+        with pytest.raises(ValueError):
+            parse_date(test_date)
     else:
-        assert isinstance(result, datetime)
-        year, day, month = map(int, test_date.split('-'))
-        assert result.year == year
-        assert result.month == month
-        assert result.day == day
+        result = parse_date(test_date)
+        assert result == test_date

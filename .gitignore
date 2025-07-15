@@ -1,1 +1,7 @@
 .idea/
+venv/
+tests/__pycache__/
+tests/app.log
+app.log
+src/__pycache__/
+src/config/__pycache__/
