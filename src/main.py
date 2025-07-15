@@ -1,8 +1,8 @@
-from typing import Optional
-
+import requests
+import random
 from datetime import datetime, timedelta
 from src.validators import parse_date
-from typing import Optional, TypeVar, Union, List
+from typing import Optional, List
 
 DayDict = dict[str, str | int]
 TimeSlotDict = DayDict
@@ -165,3 +165,65 @@ class Worker:
             available_slots.append(f"{slot_start.strftime('%H:%M')}-{slot_end.strftime('%H:%M')}")
 
         return available_slots
+
+
+def main():
+    try:
+        # 1. Получаем данные из API
+        print("Получаем данные из API...")
+        response = requests.get("https://ofc-test-01.tspb.su/test-task/", timeout=10)
+        response.raise_for_status()
+        schedule_data = response.json()
+        print("Данные успешно получены")
+
+        # 2. Проверяем и подготавливаем данные
+        if "days" not in schedule_data:
+            raise ValueError("Отсутствуют данные о рабочих днях (days)")
+
+        if "timeslot" not in schedule_data:
+            print("Предупреждение: отсутствуют данные о занятых слотах (timeslot), будут использованы пустые данные")
+            schedule_data["timeslot"] = []
+
+        # 3. Инициализируем Worker
+        worker = Worker(schedule_data["days"], schedule_data["timeslot"])
+
+        if not worker.days:
+            raise ValueError("Нет доступных рабочих дней")
+
+        # 4. Выбираем тестовую дату
+        test_day = random.choice(worker.days)
+        test_date = test_day["date"]
+        print(f"\nТестируем дату: {test_date} (Рабочие часы: {test_day['start']}-{test_day['end']})")
+
+        # 5. Демонстрация функций
+        print("\n1. Все занятые промежутки:")
+        busy = worker.get_all_timeslots_by_date(test_date)
+        print(busy if busy else "Нет занятых слотов")
+
+        print("\n2. Свободное время:")
+        free = worker.get_free_time_by_date(test_date)
+        print(free)
+
+        print("\n3. Проверка доступности времени:")
+        if free:
+            start, end = free[0].split("-")
+            print(f"Слот {start}-{end}: {worker.is_time_available(test_date, start, end)}")
+        else:
+            print(f"Весь день свободен: {worker.is_time_available(test_date, test_day['start'], test_day['end'])}")
+
+        print("\n4. Поиск слотов для встреч:")
+        durations = [30, 60, 90]
+        for duration in durations:
+            slots = worker.find_available_slots(test_date, duration)
+            print(f"- {duration} мин: {slots if slots else 'нет подходящих слотов'}")
+
+    except requests.exceptions.RequestException as e:
+        print(f"\nОшибка при запросе данных: {str(e)}")
+    except ValueError as e:
+        print(f"\nОшибка в данных: {str(e)}")
+    except Exception as e:
+        print(f"\nНеожиданная ошибка: {str(e)}")
+
+
+if __name__ == "__main__":
+    main()
